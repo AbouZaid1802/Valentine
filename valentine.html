@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Be My Valentine? 💖</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #ffeef8 0%, #ffe0f0 50%, #ffd4e5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Main container */
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        /* Question text */
+        .question {
+            font-size: 3rem;
+            color: #d63384;
+            margin-bottom: 3rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(214, 51, 132, 0.1);
+            animation: fadeInScale 0.8s ease-out;
+        }
+
+        /* Button container */
+        .button-container {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        /* Base button styles */
+        button {
+            padding: 1.2rem 3rem;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Yes button */
+        .yes-btn {
+            background: linear-gradient(135deg, #ff6b9d 0%, #ff4d8d 100%);
+            color: white;
+        }
+
+        .yes-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* No button - positioned absolutely when running away */
+        .no-btn {
+            background: linear-gradient(135deg, #ffb3c6 0%, #ffa0ba 100%);
+            color: #d63384;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .no-btn.running {
+            position: fixed;
+            z-index: 1000;
+        }
+
+        /* Success message */
+        .success-message {
+            display: none;
+            animation: fadeInScale 1s ease-out;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-title {
+            font-size: 3.5rem;
+            color: #d63384;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+        }
+
+        .success-subtitle {
+            font-size: 1.8rem;
+            color: #ff6b9d;
+            font-style: italic;
+        }
+
+        /* Floating hearts animation */
+        .heart {
+            position: fixed;
+            font-size: 2rem;
+            animation: floatUp 4s ease-in infinite;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        /* Animations */
+        @keyframes fadeInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .question {
+                font-size: 2rem;
+            }
+
+            button {
+                padding: 1rem 2rem;
+                font-size: 1.2rem;
+            }
+
+            .success-title {
+                font-size: 2.5rem;
+            }
+
+            .success-subtitle {
+                font-size: 1.3rem;
+            }
+
+            .button-container {
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .question {
+                font-size: 1.5rem;
+            }
+
+            button {
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+            }
+
+            .success-title {
+                font-size: 2rem;
+            }
+
+            .success-subtitle {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main question container -->
+    <div class="container" id="questionContainer">
+        <h1 class="question">Will you be my Valentine? 💖</h1>
+        <div class="button-container">
+            <button class="yes-btn" id="yesBtn">Yes 💘</button>
+            <button class="no-btn" id="noBtn">No 💔</button>
+        </div>
+    </div>
+
+    <!-- Success message (hidden initially) -->
+    <div class="container success-message" id="successMessage">
+        <h1 class="success-title">Good choice 😉</h1>
+        <p class="success-subtitle">I knew you'd say yes 💕</p>
+    </div>
+
+    <script>
+        // Get elements
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const questionContainer = document.getElementById('questionContainer');
+        const successMessage = document.getElementById('successMessage');
+
+        // Track if No button is running away
+        let isRunning = false;
+
+        // Function to get random position for the No button
+        function getRandomPosition() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const btnWidth = noBtn.offsetWidth;
+            const btnHeight = noBtn.offsetHeight;
+
+            // Calculate safe boundaries (with padding from edges)
+            const maxX = windowWidth - btnWidth - 20;
+            const maxY = windowHeight - btnHeight - 20;
+
+            // Generate random position
+            const randomX = Math.max(20, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(20, Math.floor(Math.random() * maxY));
+
+            return { x: randomX, y: randomY };
+        }
+
+        // Function to move No button away from cursor
+        function moveNoButton() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            noBtn.classList.add('running');
+
+            const newPos = getRandomPosition();
+            noBtn.style.left = newPos.x + 'px';
+            noBtn.style.top = newPos.y + 'px';
+
+            setTimeout(() => {
+                isRunning = false;
+            }, 300);
+        }
+
+        // Function to check if cursor is near the No button
+        function isCursorNear(event) {
+            const rect = noBtn.getBoundingClientRect();
+            const distance = 100; // Distance threshold in pixels
+
+            const cursorX = event.clientX;
+            const cursorY = event.clientY;
+
+            // Check if cursor is within distance threshold
+            return (
+                cursorX >= rect.left - distance &&
+                cursorX <= rect.right + distance &&
+                cursorY >= rect.top - distance &&
+                cursorY <= rect.bottom + distance
+            );
+        }
+
+        // Event listener for mouse movement near No button
+        document.addEventListener('mousemove', (event) => {
+            if (questionContainer.style.display !== 'none' && isCursorNear(event)) {
+                moveNoButton();
+            }
+        });
+
+        // Event listener for touch devices (mobile)
+        noBtn.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            moveNoButton();
+        });
+
+        // Prevent clicking the No button
+        noBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            moveNoButton();
+        });
+
+        // Function to create floating hearts
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '💕';
+            
+            // Random horizontal position
+            heart.style.left = Math.random() * 100 + '%';
+            
+            // Random animation delay
+            heart.style.animationDelay = Math.random() * 2 + 's';
+            
+            // Random animation duration
+            heart.style.animationDuration = (Math.random() * 2 + 3) + 's';
+            
+            document.body.appendChild(heart);
+
+            // Remove heart after animation completes
+            setTimeout(() => {
+                heart.remove();
+            }, 5000);
+        }
+
+        // Function to show success message with hearts
+        function showSuccess() {
+            // Hide question container
+            questionContainer.style.display = 'none';
+            
+            // Show success message
+            successMessage.classList.add('show');
+
+            // Create multiple hearts with intervals
+            for (let i = 0; i < 15; i++) {
+                setTimeout(createHeart, i * 200);
+            }
+
+            // Continue creating hearts periodically
+            setInterval(createHeart, 800);
+        }
+
+        // Event listener for Yes button
+        yesBtn.addEventListener('click', showSuccess);
+    </script>
+</body>
+</html>
